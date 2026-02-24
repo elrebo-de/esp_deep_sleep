@@ -94,8 +94,8 @@ C++ class ```DeepSleep```
    Wakeup sources can be:
    * timer
    * one gpio pin
-   
-   Tested with 
+
+   Tested with
    * ESP32C3
 */
 class DeepSleep {
@@ -106,12 +106,14 @@ public:
 	         );
 	virtual ~DeepSleep();
 
+	esp_sleep_wakeup_cause_t GetWakeupReason();
+
     esp_err_t EnableTimerWakeup( unsigned long sleepTime,
-                                 std::string sleepTimeUnit // {"min", "sec", "milliSec", "microSec"}
-                               );
+                            std::string sleepTimeUnit // {"min", "sec", "milliSec", "microSec"}
+                          );
     esp_err_t EnableGpioWakeup( gpio_num_t gpio,
-                                int level  // level: 1 = High, 0 = Low
-                              );
+                           int level  // level: 1 = High, 0 = Low
+                          );
 	esp_err_t GoToDeepSleep();
 
 private:
