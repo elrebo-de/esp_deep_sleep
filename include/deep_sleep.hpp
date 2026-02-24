@@ -38,6 +38,8 @@ public:
 	         );
 	virtual ~DeepSleep();
 
+	esp_sleep_wakeup_cause_t GetWakeupReason();
+
     esp_err_t EnableTimerWakeup( unsigned long sleepTime,
                             std::string sleepTimeUnit // {"min", "sec", "milliSec", "microSec"}
                           );

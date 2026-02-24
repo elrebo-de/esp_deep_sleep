@@ -1,6 +1,6 @@
-version: 1.1.1
+version: 1.2.0
 dependencies:
   idf: '>=5.5.0'
   elrebo-de/deep_sleep:
-    version: "1.1.1"
+    version: "1.2.0"
     override_path: '../../../' # three levels up, pointing to the directory with the component itself

@@ -1,6 +1,6 @@
 # Deep sleep component
 
-This repository contains an ESP-IDF component for the deep sleep function. It runs on
+ESP-IDF component for the deep sleep function. It runs on
 any ESP32 processor and is built using the ESP-IDF build system in version 5.5+.
 
 The component is implemented as C++ class `DeepSleep`.
@@ -41,6 +41,7 @@ Method EnableGpioWakeup has two parameters:
 | gpio      | gpio_num_t        | the GPIO number                 |
 | level     | int               | the wakeup trigger level {1, 0} |
 
+Example code:
 
 ```
 #include "deep_sleep.hpp"
@@ -53,6 +54,19 @@ extern "C" void app_main(void)
 		&bootCount // Address of int bootCount in RTC_DATA
     );
     
+    ESP_LOGI(tag, "GetWakeupReason");
+    esp_sleep_wakeup_cause_t wakeupReason = deepSleep.GetWakeupReason(); 
+    
+    switch(wakeupReason) {
+        case ESP_SLEEP_WAKEUP_EXT0 : ESP_LOGI(tag.c_str(), "Wakeup caused by external signal using RTC_IO"); break;
+        case ESP_SLEEP_WAKEUP_EXT1 : ESP_LOGI(tag.c_str(), "Wakeup caused by external signal using RTC_CNTL"); break;
+        case ESP_SLEEP_WAKEUP_TIMER : ESP_LOGI(tag.c_str(), "Wakeup caused by timer"); break;
+        case ESP_SLEEP_WAKEUP_TOUCHPAD : ESP_LOGI(tag.c_str(), "Wakeup caused by touchpad"); break;
+        case ESP_SLEEP_WAKEUP_ULP : ESP_LOGI(tag.c_str(), "Wakeup caused by ULP program"); break;
+        case ESP_SLEEP_WAKEUP_GPIO : ESP_LOGI(tag.c_str(), "Wakeup caused by gpio"); break;
+        default : ESP_LOGI(tag.c_str(), "Wakeup was not caused by deep sleep: %d",wakeupReason); break;
+    }
+
     ...
     
     ESP_LOGI(tag, "EnableTimerWakeup");
@@ -68,7 +82,7 @@ extern "C" void app_main(void)
     ESP_LOGI(tag, "GoToDeepSleep rc=%u", rc);
 }
 ```
-The 
+
 ## API
 The API of the component is located in the include directory ```include/deep_sleep.hpp``` and defines the
 C++ class ```DeepSleep```

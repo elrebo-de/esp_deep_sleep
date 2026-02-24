@@ -17,7 +17,7 @@ static const char *tag = "deep sleep test";
 extern "C" void app_main(void)
 {
     // short delay to reconnect logging
-    vTaskDelay(pdMS_TO_TICKS(500)); // delay 0.5 seconds
+    vTaskDelay(pdMS_TO_TICKS(5000)); // delay 0.5 seconds
 
     ESP_LOGI(tag, "Example Program");
 
@@ -27,6 +27,19 @@ extern "C" void app_main(void)
 		std::string("DeepSleep"), // tag
 		&bootCount // Address of int bootCount in RTC_DATA
     );
+
+    ESP_LOGI(tag, "GetWakeupReason");
+    esp_sleep_wakeup_cause_t wakeupReason = deepSleep.GetWakeupReason();
+
+    switch(wakeupReason) {
+        case ESP_SLEEP_WAKEUP_EXT0 : ESP_LOGI(tag, "Wakeup caused by external signal using RTC_IO"); break;
+        case ESP_SLEEP_WAKEUP_EXT1 : ESP_LOGI(tag, "Wakeup caused by external signal using RTC_CNTL"); break;
+        case ESP_SLEEP_WAKEUP_TIMER : ESP_LOGI(tag, "Wakeup caused by timer"); break;
+        case ESP_SLEEP_WAKEUP_TOUCHPAD : ESP_LOGI(tag, "Wakeup caused by touchpad"); break;
+        case ESP_SLEEP_WAKEUP_ULP : ESP_LOGI(tag, "Wakeup caused by ULP program"); break;
+        case ESP_SLEEP_WAKEUP_GPIO : ESP_LOGI(tag, "Wakeup caused by gpio"); break;
+        default : ESP_LOGI(tag, "Wakeup was not caused by deep sleep: %d",wakeupReason); break;
+    }
 
     ESP_LOGI(tag, "waiting for 5 seconds ...");
     vTaskDelay(pdMS_TO_TICKS(5000)); // delay 5 seconds
