@@ -137,9 +137,15 @@ esp_err_t DeepSleep::EnableGpioWakeup( gpio_num_t gpio, int level) // level: 1 =
 
     ESP_LOGI(tag.c_str(), "esp_deep_sleep_enable_gpio_wakeup");
     #if defined(CONFIG_IDF_TARGET_ESP32C3)
+    #if ESP_IDF_VERSION_MAJOR >= 6
+        rc = esp_sleep_enable_gpio_wakeup_on_hp_periph_powerdown( (1ULL << gpio),
+                                                (level ? ESP_GPIO_WAKEUP_GPIO_HIGH : ESP_GPIO_WAKEUP_GPIO_LOW)
+                                              );
+    #else
         rc = esp_deep_sleep_enable_gpio_wakeup( (1ULL << gpio),
                                                 (level ? ESP_GPIO_WAKEUP_GPIO_HIGH : ESP_GPIO_WAKEUP_GPIO_LOW)
                                               );
+    #endif
     #elif defined(CONFIG_IDF_TARGET_ESP32)
         rc = esp_sleep_enable_ext1_wakeup_io( (1ULL << gpio),
                                                 (level ? ESP_EXT1_WAKEUP_ANY_HIGH : ESP_EXT1_WAKEUP_ALL_LOW)
