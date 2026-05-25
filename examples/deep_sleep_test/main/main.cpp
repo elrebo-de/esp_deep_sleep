@@ -52,6 +52,7 @@ extern "C" void app_main(void)
     ESP_LOGI(tag, "EnableGpioWakeup");
     #if defined(CONFIG_IDF_TARGET_ESP32C3)
         ESP_ERROR_CHECK(deepSleep.EnableGpioWakeup((gpio_num_t) 2, 1));  // enable wake up when GPIO 2 is pulled up
+        ESP_ERROR_CHECK(deepSleep.EnableAdcWakeup((gpio_num_t) 0, 0));  // enable wake up when ADC GPIO 0 is pulled down
     #elif defined(CONFIG_IDF_TARGET_ESP32)
         ESP_ERROR_CHECK(deepSleep.EnableGpioWakeup((gpio_num_t) 39, 0));  // enable wake up when GPIO 39 is pulled down
     #elif defined(CONFIG_IDF_TARGET_ESP32C6)

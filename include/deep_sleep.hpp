@@ -46,6 +46,9 @@ public:
     esp_err_t EnableGpioWakeup( gpio_num_t gpio,
                            int level  // level: 1 = High, 0 = Low
                           );
+    esp_err_t EnableAdcWakeup( gpio_num_t gpio,
+                           int level  // level: 1 = High, 0 = Low
+                          );
 	esp_err_t GoToDeepSleep();
 
 private:

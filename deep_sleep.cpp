@@ -162,6 +162,92 @@ esp_err_t DeepSleep::EnableGpioWakeup( gpio_num_t gpio, int level) // level: 1 =
     return rc;
 }
 
+esp_err_t DeepSleep::EnableAdcWakeup( gpio_num_t gpio, int level) // level: 1 = High, 0 = Low)
+{
+    esp_err_t rc;
+    bool valid;
+
+    valid = esp_sleep_is_valid_wakeup_gpio(gpio);
+    ESP_LOGI(tag.c_str(), "GPIO %u is valid wakeup gpio: %s", gpio, valid ? "true" : "false");
+
+    ESP_LOGI(tag.c_str(), "gpio_config");
+    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+        if (level == 1) {
+            const gpio_config_t config = {
+                .pin_bit_mask = (1ULL << gpio),
+                .mode = GPIO_MODE_INPUT,
+                .pull_up_en = (gpio_pullup_t) 0,
+                .pull_down_en = (gpio_pulldown_t) 0,
+                .intr_type = GPIO_INTR_DISABLE,
+            };
+            rc = gpio_config(&config);
+            if (rc != ESP_OK) {
+                ESP_LOGI(tag.c_str(), "rc=%u", rc);
+                return rc;
+            }
+        }
+        else {
+            const gpio_config_t config = {
+                .pin_bit_mask = (1ULL << gpio),
+                .mode = GPIO_MODE_INPUT,
+                .pull_up_en = (gpio_pullup_t) 0,
+                .pull_down_en = (gpio_pulldown_t) 0,
+                .intr_type = GPIO_INTR_DISABLE,
+            };
+            rc = gpio_config(&config);
+            if (rc != ESP_OK) {
+                ESP_LOGI(tag.c_str(), "rc=%u", rc);
+                return rc;
+            }
+        }
+        gpio_dump_io_configuration(stdout, (1ULL << gpio));
+    #elif defined(CONFIG_IDF_TARGET_ESP32)
+        if (level == 1) {
+            ESP_ERROR_CHECK(rtc_gpio_pullup_dis(gpio));
+            ESP_ERROR_CHECK(rtc_gpio_pulldown_dis(gpio));
+        }
+        else {
+            ESP_ERROR_CHECK(rtc_gpio_pullup_dis(gpio));
+            ESP_ERROR_CHECK(rtc_gpio_pulldown_dis(gpio));
+        }
+    #elif defined(CONFIG_IDF_TARGET_ESP32C6)
+        if (level == 1) {
+            ESP_ERROR_CHECK(rtc_gpio_pullup_dis(gpio));
+            ESP_ERROR_CHECK(rtc_gpio_pulldown_dis(gpio));
+        }
+        else {
+            ESP_ERROR_CHECK(rtc_gpio_pullup_dis(gpio));
+            ESP_ERROR_CHECK(rtc_gpio_pulldown_dis(gpio));
+        }
+    #endif
+
+    ESP_LOGI(tag.c_str(), "esp_deep_sleep_enable_gpio_wakeup");
+    #if defined(CONFIG_IDF_TARGET_ESP32C3)
+    #if ESP_IDF_VERSION_MAJOR >= 6
+        rc = esp_sleep_enable_gpio_wakeup_on_hp_periph_powerdown( (1ULL << gpio),
+                                                (level ? ESP_GPIO_WAKEUP_GPIO_HIGH : ESP_GPIO_WAKEUP_GPIO_LOW)
+                                              );
+    #else
+        rc = esp_deep_sleep_enable_gpio_wakeup( (1ULL << gpio),
+                                                (level ? ESP_GPIO_WAKEUP_GPIO_HIGH : ESP_GPIO_WAKEUP_GPIO_LOW)
+                                              );
+    #endif
+    #elif defined(CONFIG_IDF_TARGET_ESP32)
+        rc = esp_sleep_enable_ext1_wakeup_io( (1ULL << gpio),
+                                                (level ? ESP_EXT1_WAKEUP_ANY_HIGH : ESP_EXT1_WAKEUP_ALL_LOW)
+                                              );
+    #elif defined(CONFIG_IDF_TARGET_ESP32C6)
+        rc = esp_sleep_enable_ext1_wakeup_io( (1ULL << gpio),
+                                                (level ? ESP_EXT1_WAKEUP_ANY_HIGH : ESP_EXT1_WAKEUP_ANY_LOW)
+                                              );
+    #endif
+    if (rc != ESP_OK) {
+        ESP_LOGI(tag.c_str(), "rc=%u", rc);
+        return rc;
+    }
+    return rc;
+}
+
 esp_err_t DeepSleep::GoToDeepSleep()
 {
     ESP_LOGI(tag.c_str(), "Going to sleep now");
