@@ -26,18 +26,17 @@ DeepSleep::DeepSleep( std::string tag,
     ++(*bootCount);
     ESP_LOGD(tag.c_str(), "bootCount is %i", *bootCount);
 
-    // find wakeup reason
-    wakeup_reason = esp_sleep_get_wakeup_cause();
+    // find wakeup causes
+    wakeup_causes = esp_sleep_get_wakeup_causes();
 
-    switch(wakeup_reason) {
-        case ESP_SLEEP_WAKEUP_EXT0 : ESP_LOGD(tag.c_str(), "Wakeup caused by external signal using RTC_IO"); break;
-        case ESP_SLEEP_WAKEUP_EXT1 : ESP_LOGD(tag.c_str(), "Wakeup caused by external signal using RTC_CNTL"); break;
-        case ESP_SLEEP_WAKEUP_TIMER : ESP_LOGD(tag.c_str(), "Wakeup caused by timer"); break;
-        case ESP_SLEEP_WAKEUP_TOUCHPAD : ESP_LOGD(tag.c_str(), "Wakeup caused by touchpad"); break;
-        case ESP_SLEEP_WAKEUP_ULP : ESP_LOGD(tag.c_str(), "Wakeup caused by ULP program"); break;
-        case ESP_SLEEP_WAKEUP_GPIO : ESP_LOGD(tag.c_str(), "Wakeup caused by gpio"); break;
-        default : ESP_LOGD(tag.c_str(), "Wakeup was not caused by deep sleep: %d",wakeup_reason); break;
-    }
+
+    if(wakeup_causes & BIT(ESP_SLEEP_WAKEUP_EXT0)) ESP_LOGD(tag.c_str(), "Wakeup caused by external signal using RTC_IO");
+    else if(wakeup_causes & BIT(ESP_SLEEP_WAKEUP_EXT1)) ESP_LOGD(tag.c_str(), "Wakeup caused by external signal using RTC_CNTL");
+    else if(wakeup_causes & BIT(ESP_SLEEP_WAKEUP_TIMER)) ESP_LOGD(tag.c_str(), "Wakeup caused by timer");
+    else if(wakeup_causes & BIT(ESP_SLEEP_WAKEUP_TOUCHPAD)) ESP_LOGD(tag.c_str(), "Wakeup caused by touchpad");
+    else if(wakeup_causes & BIT(ESP_SLEEP_WAKEUP_ULP)) ESP_LOGD(tag.c_str(), "Wakeup caused by ULP program");
+    else if(wakeup_causes & BIT(ESP_SLEEP_WAKEUP_GPIO)) ESP_LOGD(tag.c_str(), "Wakeup caused by gpio");
+    else ESP_LOGD(tag.c_str(), "Wakeup was not caused by deep sleep: %d",wakeup_causes);
 
     /* abgeschaltet, da die Ermittlung des GPIO nicht klappt
     if (ESP_SLEEP_WAKEUP_EXT1 == wakeup_reason || ESP_SLEEP_WAKEUP_GPIO == wakeup_reason) {
@@ -261,6 +260,6 @@ esp_err_t DeepSleep::GoToDeepSleep()
     return rc;
 }
 
-esp_sleep_wakeup_cause_t DeepSleep::GetWakeupReason() {
-    return this->wakeup_reason;
+uint32_t DeepSleep::GetWakeupCauses() {
+    return this->wakeup_causes;
 }

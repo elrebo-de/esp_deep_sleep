@@ -17,7 +17,7 @@ static const char *tag = "deep sleep test";
 extern "C" void app_main(void)
 {
     // short delay to reconnect logging
-    vTaskDelay(pdMS_TO_TICKS(5000)); // delay 0.5 seconds
+    vTaskDelay(pdMS_TO_TICKS(500)); // delay 0.5 seconds
 
     ESP_LOGI(tag, "Example Program");
 
@@ -28,23 +28,16 @@ extern "C" void app_main(void)
 		&bootCount // Address of int bootCount in RTC_DATA
     );
 
-    ESP_LOGI(tag, "GetWakeupReason");
-    esp_sleep_wakeup_cause_t wakeupReason = deepSleep.GetWakeupReason();
+    ESP_LOGI(tag, "GetWakeupCauses");
+    uint32_t wakeupCauses = deepSleep.GetWakeupCauses();
 
-    switch(wakeupReason) {
-        case ESP_SLEEP_WAKEUP_EXT0 : ESP_LOGI(tag, "Wakeup caused by external signal using RTC_IO"); break;
-        case ESP_SLEEP_WAKEUP_EXT1 : ESP_LOGI(tag, "Wakeup caused by external signal using RTC_CNTL"); break;
-        case ESP_SLEEP_WAKEUP_TIMER : ESP_LOGI(tag, "Wakeup caused by timer"); break;
-        case ESP_SLEEP_WAKEUP_TOUCHPAD : ESP_LOGI(tag, "Wakeup caused by touchpad"); break;
-        case ESP_SLEEP_WAKEUP_ULP : ESP_LOGI(tag, "Wakeup caused by ULP program"); break;
-        case ESP_SLEEP_WAKEUP_GPIO : ESP_LOGI(tag, "Wakeup caused by gpio"); break;
-        default : ESP_LOGI(tag, "Wakeup was not caused by deep sleep: %d",wakeupReason); break;
-    }
-
-    ESP_LOGI(tag, "waiting for 5 seconds ...");
-    vTaskDelay(pdMS_TO_TICKS(5000)); // delay 5 seconds
-
-    bool rc = false;
+    if(wakeupCauses & BIT(ESP_SLEEP_WAKEUP_EXT0)) ESP_LOGI(tag, "Wakeup caused by external signal using RTC_IO");
+    else if(wakeupCauses & BIT(ESP_SLEEP_WAKEUP_EXT1)) ESP_LOGI(tag, "Wakeup caused by external signal using RTC_CNTL");
+    else if(wakeupCauses & BIT(ESP_SLEEP_WAKEUP_TIMER)) ESP_LOGI(tag, "Wakeup caused by timer");
+    else if(wakeupCauses & BIT(ESP_SLEEP_WAKEUP_TOUCHPAD)) ESP_LOGI(tag, "Wakeup caused by touchpad");
+    else if(wakeupCauses & BIT(ESP_SLEEP_WAKEUP_ULP)) ESP_LOGI(tag, "Wakeup caused by ULP program");
+    else if(wakeupCauses & BIT(ESP_SLEEP_WAKEUP_GPIO)) ESP_LOGI(tag, "Wakeup caused by gpio");
+    else ESP_LOGI(tag, "Wakeup was not caused by deep sleep: %d",wakeupCauses);
 
     ESP_LOGI(tag, "EnableTimerWakeup");
     ESP_ERROR_CHECK(deepSleep.EnableTimerWakeup(30, "sec"));  // enable wake up after 30 seconds sleep time
@@ -58,6 +51,11 @@ extern "C" void app_main(void)
     #elif defined(CONFIG_IDF_TARGET_ESP32C6)
         ESP_ERROR_CHECK(deepSleep.EnableGpioWakeup((gpio_num_t) 2, 1));  // enable wake up when GPIO 2 is pulled up
     #endif
+
+    ESP_LOGI(tag, "waiting for 5 seconds ...");
+    vTaskDelay(pdMS_TO_TICKS(5000)); // delay 5 seconds
+
+    bool rc = false;
 
     ESP_LOGI(tag, "GoToDeepSleep");
     rc = deepSleep.GoToDeepSleep(); // go to deep sleep

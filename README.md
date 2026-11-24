@@ -21,7 +21,8 @@ to define an int bootCount as RTC_DATA_ATTR.
 The wakeup sources can be any of the following:
 
 * Timer
-* GPIO
+* GPIO (uses internal pullup/pulldown)
+* ADC (uses external pullup/pulldown)
 
 To enable wakeup by timer the method EnableTimerWakeup is used.
 
@@ -41,6 +42,19 @@ Method EnableGpioWakeup has two parameters:
 | gpio      | gpio_num_t        | the GPIO number                 |
 | level     | int               | the wakeup trigger level {1, 0} |
 
+EnableGpioWakeup uses internal pullup or pulldown resistors depending on the parameter wakeup trigger level.
+
+To enable wakeup by ADC GPIO the method EnableAdcWakeup is used.
+
+Method EnableAdcWakeup has two parameters:
+
+| Parameter | Type of Parameter | Usage                           |
+|:----------|:------------------|:--------------------------------|
+| gpio      | gpio_num_t        | the GPIO number                 |
+| level     | int               | the wakeup trigger level {1, 0} |
+
+EnableAdcWakeup does not use internal pullup or pulldown resistors. The GPIO must be pulled up or down depending on the parameter wakeup trigger level. If no external pullup/pulldown is available, Method GoToDeepSleep may fail with error "Deep sleep request is rejected".
+
 Example code:
 
 ```
@@ -54,18 +68,16 @@ extern "C" void app_main(void)
 		&bootCount // Address of int bootCount in RTC_DATA
     );
     
-    ESP_LOGI(tag, "GetWakeupReason");
-    esp_sleep_wakeup_cause_t wakeupReason = deepSleep.GetWakeupReason(); 
-    
-    switch(wakeupReason) {
-        case ESP_SLEEP_WAKEUP_EXT0 : ESP_LOGI(tag.c_str(), "Wakeup caused by external signal using RTC_IO"); break;
-        case ESP_SLEEP_WAKEUP_EXT1 : ESP_LOGI(tag.c_str(), "Wakeup caused by external signal using RTC_CNTL"); break;
-        case ESP_SLEEP_WAKEUP_TIMER : ESP_LOGI(tag.c_str(), "Wakeup caused by timer"); break;
-        case ESP_SLEEP_WAKEUP_TOUCHPAD : ESP_LOGI(tag.c_str(), "Wakeup caused by touchpad"); break;
-        case ESP_SLEEP_WAKEUP_ULP : ESP_LOGI(tag.c_str(), "Wakeup caused by ULP program"); break;
-        case ESP_SLEEP_WAKEUP_GPIO : ESP_LOGI(tag.c_str(), "Wakeup caused by gpio"); break;
-        default : ESP_LOGI(tag.c_str(), "Wakeup was not caused by deep sleep: %d",wakeupReason); break;
-    }
+    ESP_LOGI(tag, "GetWakeupCauses");
+    uint32_t wakeupCauses = deepSleep.GetWakeupCauses();
+
+    if(wakeupCauses & BIT(ESP_SLEEP_WAKEUP_EXT0)) ESP_LOGI(tag, "Wakeup caused by external signal using RTC_IO");
+    else if(wakeupCauses & BIT(ESP_SLEEP_WAKEUP_EXT1)) ESP_LOGI(tag, "Wakeup caused by external signal using RTC_CNTL");
+    else if(wakeupCauses & BIT(ESP_SLEEP_WAKEUP_TIMER)) ESP_LOGI(tag, "Wakeup caused by timer");
+    else if(wakeupCauses & BIT(ESP_SLEEP_WAKEUP_TOUCHPAD)) ESP_LOGI(tag, "Wakeup caused by touchpad");
+    else if(wakeupCauses & BIT(ESP_SLEEP_WAKEUP_ULP)) ESP_LOGI(tag, "Wakeup caused by ULP program");
+    else if(wakeupCauses & BIT(ESP_SLEEP_WAKEUP_GPIO)) ESP_LOGI(tag, "Wakeup caused by gpio");
+    else ESP_LOGI(tag, "Wakeup was not caused by deep sleep: %d",wakeupCauses);
 
     ...
     
@@ -75,11 +87,13 @@ extern "C" void app_main(void)
     ESP_LOGI(tag, "EnableGpioWakeup");
     ESP_ERROR_CHECK(deepSleep.EnableGpioWakeup((gpio_num_t) 2, 1));  // enable wake up when GPIO 2 is pulled up
     
+    ESP_LOGI(tag, "EnableAdcWakeup");
+    ESP_ERROR_CHECK(deepSleep.EnableAdcWakeup((gpio_num_t) 0, 0));  // enable wake up when ADC GPIO 0 is pulled down
     ESP_LOGI(tag, "GoToDeepSleep");
     rc = deepSleep.GoToDeepSleep(); // go to deep sleep
     
     // this statement will not be reached, if GoToDeepSleep is working
-    ESP_LOGI(tag, "GoToDeepSleep rc=%u", rc);
+    ESP_LOGI(tag, "GoToDeepSleep did not work! rc=%u", rc);
 }
 ```
 
@@ -106,7 +120,7 @@ public:
 	         );
 	virtual ~DeepSleep();
 
-	esp_sleep_wakeup_cause_t GetWakeupReason();
+	uint32_t GetWakeupCauses();
 
     esp_err_t EnableTimerWakeup( unsigned long sleepTime,
                             std::string sleepTimeUnit // {"min", "sec", "milliSec", "microSec"}
@@ -114,11 +128,14 @@ public:
     esp_err_t EnableGpioWakeup( gpio_num_t gpio,
                            int level  // level: 1 = High, 0 = Low
                           );
+    esp_err_t EnableAdcWakeup( gpio_num_t gpio,
+                           int level  // level: 1 = High, 0 = Low
+                          );
 	esp_err_t GoToDeepSleep();
 
 private:
     std::string tag = "DeepSleep";
-    esp_sleep_wakeup_cause_t wakeup_reason; // the wakeup reason for the last boot
+    uint32_t wakeup_causes; // the wakeup causes for the last boot
 };
 ```
 

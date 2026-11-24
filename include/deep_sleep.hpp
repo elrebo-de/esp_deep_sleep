@@ -38,7 +38,7 @@ public:
 	         );
 	virtual ~DeepSleep();
 
-	esp_sleep_wakeup_cause_t GetWakeupReason();
+	uint32_t GetWakeupCauses();
 
     esp_err_t EnableTimerWakeup( unsigned long sleepTime,
                             std::string sleepTimeUnit // {"min", "sec", "milliSec", "microSec"}
@@ -53,7 +53,7 @@ public:
 
 private:
     std::string tag = "DeepSleep";
-    esp_sleep_wakeup_cause_t wakeup_reason; // the wakeup reason for the last boot
+    uint32_t wakeup_causes; // the wakeup causes for the last boot
 };
 
 #endif /* DEEP_SLEEP_HPP_ */
